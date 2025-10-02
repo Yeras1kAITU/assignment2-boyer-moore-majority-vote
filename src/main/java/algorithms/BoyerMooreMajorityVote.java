@@ -208,4 +208,75 @@ public class BoyerMooreMajorityVote {
 
         return null;
     }
+
+    /**
+     * Enhanced version with improved edge case handling and validation
+     */
+    public Integer findMajorityElementEnhanced(int[] nums) {
+        // Early validation for null and empty arrays
+        if (nums == null) {
+            throw new IllegalArgumentException("Input array cannot be null");
+        }
+
+        if (nums.length == 0) {
+            throw new IllegalArgumentException("Input array cannot be empty");
+        }
+
+        // Single element array optimization
+        if (nums.length == 1) {
+            return nums[0];
+        }
+
+        // Two element array optimization
+        if (nums.length == 2) {
+            return nums[0] == nums[1] ? nums[0] : null;
+        }
+
+        if (enableMetrics && performanceTracker != null) {
+            performanceTracker.incrementArrayAccess(nums.length);
+            performanceTracker.startTiming();
+            performanceTracker.incrementCalls();
+        }
+
+        Integer candidate = findCandidate(nums);
+
+        // Early return if no candidate found
+        if (candidate == null) {
+            if (enableMetrics && performanceTracker != null) {
+                performanceTracker.stopTiming();
+            }
+            return null;
+        }
+
+        boolean isMajority = verifyCandidate(nums, candidate);
+
+        if (enableMetrics && performanceTracker != null) {
+            performanceTracker.stopTiming();
+        }
+
+        return isMajority ? candidate : null;
+    }
+
+    /**
+     * Safe version that returns Optional instead of null
+     */
+    public java.util.Optional<Integer> findMajorityElementSafe(int[] nums) {
+        try {
+            Integer result = findMajorityElement(nums);
+            return java.util.Optional.ofNullable(result);
+        } catch (IllegalArgumentException e) {
+            return java.util.Optional.empty();
+        }
+    }
+
+    /**
+     * Batch processing for multiple arrays
+     */
+    public java.util.List<Integer> findMajorityElements(java.util.List<int[]> arrays) {
+        return arrays.stream()
+                .map(this::findMajorityElementSafe)
+                .filter(java.util.Optional::isPresent)
+                .map(java.util.Optional::get)
+                .toList();
+    }
 }
