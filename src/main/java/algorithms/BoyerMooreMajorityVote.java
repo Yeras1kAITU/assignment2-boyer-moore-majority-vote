@@ -110,4 +110,102 @@ public class BoyerMooreMajorityVote {
             performanceTracker.reset();
         }
     }
+
+    /**
+     * Optimized implementation that combines candidate finding and verification
+     */
+    public Integer findMajorityElementOptimized(int[] nums) {
+        if (nums == null || nums.length == 0) {
+            throw new IllegalArgumentException("Input array cannot be null or empty");
+        }
+
+        if (enableMetrics && performanceTracker != null) {
+            performanceTracker.incrementArrayAccess(nums.length);
+            performanceTracker.startTiming();
+        }
+
+        Integer candidate = null;
+        int count = 0;
+
+        // Find candidate
+        for (int num : nums) {
+            if (enableMetrics && performanceTracker != null) {
+                performanceTracker.incrementComparisons(1);
+                performanceTracker.incrementArrayAccess(1);
+            }
+
+            if (count == 0) {
+                candidate = num;
+                count = 1;
+            } else if (candidate == num) {
+                count++;
+            } else {
+                count--;
+            }
+        }
+
+        // Verify candidate
+        if (candidate != null) {
+            int candidateCount = 0;
+            for (int num : nums) {
+                if (enableMetrics && performanceTracker != null) {
+                    performanceTracker.incrementComparisons(1);
+                    performanceTracker.incrementArrayAccess(1);
+                }
+
+                if (num == candidate) {
+                    candidateCount++;
+                }
+            }
+
+            if (enableMetrics && performanceTracker != null) {
+                performanceTracker.stopTiming();
+            }
+
+            return candidateCount > nums.length / 2 ? candidate : null;
+        }
+
+        if (enableMetrics && performanceTracker != null) {
+            performanceTracker.stopTiming();
+        }
+        return null;
+    }
+
+    /**
+     * Generic version that handles multiple data types
+     */
+    public static <T> T findMajorityElementGeneric(T[] elements) {
+        if (elements == null || elements.length == 0) {
+            throw new IllegalArgumentException("Input array cannot be null or empty");
+        }
+
+        T candidate = null;
+        int count = 0;
+
+        // Find candidate
+        for (T element : elements) {
+            if (count == 0) {
+                candidate = element;
+                count = 1;
+            } else if (candidate.equals(element)) {
+                count++;
+            } else {
+                count--;
+            }
+        }
+
+        // Verify candidate
+        if (candidate != null) {
+            int candidateCount = 0;
+            for (T element : elements) {
+                if (candidate.equals(element)) {
+                    candidateCount++;
+                }
+            }
+
+            return candidateCount > elements.length / 2 ? candidate : null;
+        }
+
+        return null;
+    }
 }

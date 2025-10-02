@@ -97,4 +97,50 @@ class BoyerMooreMajorityVoteTest {
 
         assertNotNull(bmWithMetrics.getPerformanceTracker());
     }
+
+    @Test
+    @DisplayName("Test optimized version")
+    void testOptimizedVersion() {
+        int[] nums = {1, 2, 3, 2, 2, 2, 1};
+        Integer result = bm.findMajorityElementOptimized(nums);
+        assertEquals(2, result);
+    }
+
+    @Test
+    @DisplayName("Test generic version with strings")
+    void testGenericVersion() {
+        String[] strings = {"apple", "banana", "apple", "apple", "cherry"};
+        String result = BoyerMooreMajorityVote.findMajorityElementGeneric(strings);
+        assertEquals("apple", result);
+    }
+
+    @Test
+    @DisplayName("Test generic version with no majority")
+    void testGenericVersionNoMajority() {
+        String[] strings = {"apple", "banana", "cherry", "date"};
+        String result = BoyerMooreMajorityVote.findMajorityElementGeneric(strings);
+        assertNull(result);
+    }
+
+    @Test
+    @DisplayName("Test worst-case scenario")
+    void testWorstCaseScenario() {
+        int[] nums = {1, 2, 1, 2, 1, 2, 1};
+        Integer result = bm.findMajorityElement(nums);
+        assertEquals(1, result);
+    }
+
+    @Test
+    @DisplayName("Test large array with majority")
+    void testLargeArray() {
+        int size = 10000;
+        int[] nums = new int[size];
+        java.util.Arrays.fill(nums, 0, size/2 + 1, 42); // Majority
+        for (int i = size/2 + 1; i < size; i++) {
+            nums[i] = i; // Distinct elements
+        }
+
+        Integer result = bm.findMajorityElement(nums);
+        assertEquals(42, result);
+    }
 }
