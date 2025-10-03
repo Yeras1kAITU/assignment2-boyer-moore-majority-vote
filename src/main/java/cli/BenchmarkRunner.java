@@ -5,7 +5,8 @@ import metrics.PerformanceTracker;
 import java.util.random.RandomGenerator;
 
 /**
- * Command-line interface for benchmarking Boyer-Moore Majority Vote algorithm
+ * Comprehensive Benchmark Runner for Boyer-Moore Majority Vote Algorithm
+ * Includes both simple benchmarks and JMH microbenchmarks integration
  */
 public class BenchmarkRunner {
 
@@ -16,7 +17,8 @@ public class BenchmarkRunner {
         }
 
         switch (args[0]) {
-            case "benchmark" -> runBenchmarks();
+            case "benchmark" -> runSimpleBenchmarks();
+            case "jmh" -> runJMHBenchmarks();
             case "test" -> runCorrectnessTests();
             case "single" -> {
                 if (args.length < 2) {
@@ -33,14 +35,19 @@ public class BenchmarkRunner {
         System.out.println("""
             Boyer-Moore Majority Vote Benchmark CLI
             Usage:
-              benchmark - Run comprehensive benchmarks
+              benchmark - Run simple benchmarks with performance tracking
+              jmh       - Run JMH microbenchmarks (requires package first)
               test      - Run correctness tests
               single <size> - Run single test with given array size
+            
+            JMH Usage:
+              mvn clean package
+              java -jar target/microbenchmarks.jar
             """);
     }
 
-    private static void runBenchmarks() {
-        System.out.println("Running Boyer-Moore Majority Vote Benchmarks");
+    private static void runSimpleBenchmarks() {
+        System.out.println("Running Simple Benchmarks with Performance Tracking");
         System.out.println(PerformanceTracker.getCSVHeader());
 
         int[] sizes = {100, 1000, 10000, 100000, 1000000};
@@ -59,7 +66,7 @@ public class BenchmarkRunner {
         Integer result = bm.findMajorityElement(array);
         var tracker = bm.getPerformanceTracker();
 
-        System.out.println(tracker.getMetricsCSV() + ",true");
+        System.out.println(tracker.getMetricsCSV() + ",with_majority");
     }
 
     private static void benchmarkWithoutMajority(int size) {
@@ -69,7 +76,7 @@ public class BenchmarkRunner {
         Integer result = bm.findMajorityElement(array);
         var tracker = bm.getPerformanceTracker();
 
-        System.out.println(tracker.getMetricsCSV() + ",false");
+        System.out.println(tracker.getMetricsCSV() + ",without_majority");
     }
 
     private static void benchmarkWorstCase(int size) {
@@ -79,7 +86,7 @@ public class BenchmarkRunner {
         Integer result = bm.findMajorityElement(array);
         var tracker = bm.getPerformanceTracker();
 
-        System.out.println(tracker.getMetricsCSV() + ",worst");
+        System.out.println(tracker.getMetricsCSV() + ",worst_case");
     }
 
     private static int[] generateArrayWithMajority(int size, int majorityElement) {
@@ -87,17 +94,14 @@ public class BenchmarkRunner {
         int majorityCount = size / 2 + 1;
         var random = RandomGenerator.getDefault();
 
-        // Fill majority elements
         for (int i = 0; i < majorityCount; i++) {
             array[i] = majorityElement;
         }
 
-        // Fill remaining with random elements
         for (int i = majorityCount; i < size; i++) {
             array[i] = majorityElement + 1 + random.nextInt(100);
         }
 
-        // Shuffle the array
         for (int i = 0; i < size; i++) {
             int j = random.nextInt(size);
             int temp = array[i];
@@ -113,7 +117,7 @@ public class BenchmarkRunner {
         var random = RandomGenerator.getDefault();
 
         for (int i = 0; i < size; i++) {
-            array[i] = random.nextInt(size / 2); // Ensure no majority
+            array[i] = random.nextInt(size / 2);
         }
 
         return array;
@@ -121,7 +125,6 @@ public class BenchmarkRunner {
 
     private static int[] generateWorstCaseArray(int size) {
         int[] array = new int[size];
-        // Worst case: alternating elements that cause maximum count fluctuations
         for (int i = 0; i < size; i++) {
             array[i] = i % 2;
         }
@@ -134,12 +137,12 @@ public class BenchmarkRunner {
         var bm = new BoyerMooreMajorityVote();
 
         int[][] testCases = {
-                {1, 2, 3, 2, 2, 2, 1},  // Majority exists
-                {1, 2, 3, 4, 5},         // No majority
-                {1},                      // Single element
-                {2, 2},                   // Two same elements
-                {1, 2},                   // Two different elements
-                {3, 3, 4, 2, 4, 4, 2, 4, 4}  // Majority exists
+                {1, 2, 3, 2, 2, 2, 1},
+                {1, 2, 3, 4, 5},
+                {1},
+                {2, 2},
+                {1, 2},
+                {3, 3, 4, 2, 4, 4, 2, 4, 4}
         };
 
         Integer[] expected = {2, null, 1, 2, null, 4};
@@ -151,10 +154,7 @@ public class BenchmarkRunner {
                     (result != null && result.equals(expected[i]));
 
             System.out.printf("Test %d: %s - Expected: %s, Got: %s%n",
-                    i + 1,
-                    passed ? "PASS" : "FAIL",
-                    expected[i],
-                    result);
+                    i + 1, passed ? "PASS" : "FAIL", expected[i], result);
 
             if (!passed) {
                 allPassed = false;
@@ -177,5 +177,25 @@ public class BenchmarkRunner {
         System.out.printf("Result: %s%n", result);
         System.out.printf("Execution Time: %,d ns%n", endTime - startTime);
         bm.getPerformanceTracker().printMetrics();
+    }
+
+    /**
+     * Run JMH Microbenchmarks - Inform user about proper usage
+     */
+    private static void runJMHBenchmarks() {
+        System.out.println("""
+            JMH Microbenchmarks require a two-step process:
+            
+            Step 1: Package the application with JMH
+            mvn clean package
+            
+            Step 2: Run the JMH benchmarks
+            java -jar target/microbenchmarks.jar
+            
+            Alternatively, run the JMH benchmark directly:
+            mvn compile exec:java -Dexec.mainClass="cli.JMHBenchmark"
+            
+            This will generate detailed performance measurements in jmh-benchmark-results.txt
+            """);
     }
 }

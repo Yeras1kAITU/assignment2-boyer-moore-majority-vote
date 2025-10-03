@@ -53,3 +53,15 @@ mvn exec:java "-Dexec.mainClass=cli.BenchmarkRunner" "-Dexec.args=test"
 ```bash
 mvn exec:java "-Dexec.mainClass=cli.BenchmarkRunner" "-Dexec.args=single 1000"
 ```
+
+## JMH Microbenchmarks
+
+For accurate performance measurements, use JMH (Java Microbenchmark Harness):
+
+```bash
+# Package the application with JMH
+mvn clean package
+
+# Run JMH benchmarks
+java -jar target/microbenchmarks.jar
+```
