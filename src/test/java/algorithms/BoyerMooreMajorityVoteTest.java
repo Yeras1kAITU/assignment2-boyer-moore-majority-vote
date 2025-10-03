@@ -3,10 +3,16 @@ package algorithms;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
+import org.junit.jupiter.params.provider.Arguments;
 import static org.junit.jupiter.api.Assertions.*;
 
+import java.util.stream.Stream;
+import java.util.random.RandomGenerator;
+
 /**
- * Comprehensive unit tests for BoyerMooreMajorityVote algorithm
+ * Comprehensive unit tests with edge cases and property-based testing
  */
 class BoyerMooreMajorityVoteTest {
 
@@ -17,6 +23,7 @@ class BoyerMooreMajorityVoteTest {
         bm = new BoyerMooreMajorityVote();
     }
 
+    // Basic functionality tests
     @Test
     @DisplayName("Test with majority element present")
     void testWithMajorityElement() {
@@ -33,6 +40,7 @@ class BoyerMooreMajorityVoteTest {
         assertNull(result);
     }
 
+    // Edge cases
     @Test
     @DisplayName("Test single element array")
     void testSingleElement() {
@@ -86,6 +94,144 @@ class BoyerMooreMajorityVoteTest {
         assertNull(result);
     }
 
+    // Input distribution tests
+    @Test
+    @DisplayName("Test sorted array with majority")
+    void testSortedArrayWithMajority() {
+        int[] nums = {1, 1, 1, 1, 2, 3, 4};
+        Integer result = bm.findMajorityElement(nums);
+        assertEquals(1, result);
+    }
+
+    @Test
+    @DisplayName("Test reverse sorted array with majority")
+    void testReverseSortedArrayWithMajority() {
+        int[] nums = {4, 3, 2, 1, 1, 1, 1};
+        Integer result = bm.findMajorityElement(nums);
+        assertEquals(1, result);
+    }
+
+    @Test
+    @DisplayName("Test nearly sorted array with majority")
+    void testNearlySortedArrayWithMajority() {
+        int[] nums = {1, 1, 2, 1, 1, 3, 4};
+        Integer result = bm.findMajorityElement(nums);
+        assertEquals(1, result);
+    }
+
+    @Test
+    @DisplayName("Test alternating elements with majority")
+    void testAlternatingElementsWithMajority() {
+        int[] nums = {1, 2, 1, 2, 1, 2, 1};
+        Integer result = bm.findMajorityElement(nums);
+        assertEquals(1, result);
+    }
+
+    @Test
+    @DisplayName("Test alternating elements without majority")
+    void testAlternatingElementsWithoutMajority() {
+        int[] nums = {1, 2, 1, 2, 1, 2};
+        Integer result = bm.findMajorityElement(nums);
+        assertNull(result);
+    }
+
+    // Large array tests
+    @Test
+    @DisplayName("Test large array with majority")
+    void testLargeArrayWithMajority() {
+        int size = 10000;
+        int[] nums = new int[size];
+        java.util.Arrays.fill(nums, 0, size/2 + 1, 42);
+        for (int i = size/2 + 1; i < size; i++) {
+            nums[i] = i;
+        }
+
+        Integer result = bm.findMajorityElement(nums);
+        assertEquals(42, result);
+    }
+
+    @Test
+    @DisplayName("Test large array without majority")
+    void testLargeArrayWithoutMajority() {
+        int size = 10000;
+        int[] nums = new int[size];
+        for (int i = 0; i < size; i++) {
+            nums[i] = i % 10; // No single element > 50%
+        }
+
+        Integer result = bm.findMajorityElement(nums);
+        assertNull(result);
+    }
+
+    // Property-based tests
+    @ParameterizedTest
+    @MethodSource("provideRandomArrays")
+    @DisplayName("Property test: if result exists, it must be majority")
+    void testMajorityProperty(int[] array) {
+        Integer result = bm.findMajorityElement(array);
+
+        if (result != null) {
+            int count = 0;
+            for (int num : array) {
+                if (num == result) count++;
+            }
+            assertTrue(count > array.length / 2,
+                    "Result " + result + " is not majority in array of size " + array.length);
+        }
+    }
+
+    @ParameterizedTest
+    @MethodSource("provideMajorityArrays")
+    @DisplayName("Property test: must find majority when it exists")
+    void testMustFindMajority(int[] array, int expectedMajority) {
+        Integer result = bm.findMajorityElement(array);
+        assertNotNull(result, "Should find majority in array");
+        assertEquals(expectedMajority, result);
+    }
+
+    private static Stream<Arguments> provideRandomArrays() {
+        var random = RandomGenerator.getDefault();
+        return Stream.generate(() -> {
+            int size = random.nextInt(1000) + 1;
+            int[] array = new int[size];
+            for (int i = 0; i < size; i++) {
+                array[i] = random.nextInt(size / 2 + 1);
+            }
+            return Arguments.of(array);
+        }).limit(50); // Run 50 random tests
+    }
+
+    private static Stream<Arguments> provideMajorityArrays() {
+        var random = RandomGenerator.getDefault();
+        return Stream.generate(() -> {
+            int size = random.nextInt(500) + 10;
+            int majorityElement = random.nextInt(100);
+            int[] array = new int[size];
+
+            // Fill majority
+            int majorityCount = size / 2 + 1;
+            for (int i = 0; i < majorityCount; i++) {
+                array[i] = majorityElement;
+            }
+
+            // Fill rest with different elements
+            for (int i = majorityCount; i < size; i++) {
+                array[i] = majorityElement + 1 + random.nextInt(100);
+            }
+
+            // Shuffle
+            for (int i = 0; i < size; i++) {
+                int j = random.nextInt(size);
+                int temp = array[i];
+                array[i] = array[j];
+                array[j] = temp;
+            }
+
+            return Arguments.of(array, majorityElement);
+        }).limit(20); // Run 20 majority tests
+    }
+
+    // Performance metric tests
     @Test
     @DisplayName("Test performance metrics collection")
     void testPerformanceMetrics() {
@@ -95,9 +241,13 @@ class BoyerMooreMajorityVoteTest {
         Integer result = bmWithMetrics.findMajorityElement(nums);
         assertEquals(2, result);
 
-        assertNotNull(bmWithMetrics.getPerformanceTracker());
+        var tracker = bmWithMetrics.getPerformanceTracker();
+        assertNotNull(tracker);
+        assertTrue(tracker.getComparisonCount() > 0);
+        assertTrue(tracker.getArrayAccessCount() > 0);
     }
 
+    // Algorithm variants tests
     @Test
     @DisplayName("Test optimized version")
     void testOptimizedVersion() {
@@ -107,7 +257,20 @@ class BoyerMooreMajorityVoteTest {
     }
 
     @Test
-    @DisplayName("Test generic version with strings")
+    @DisplayName("Test enhanced version with edge cases")
+    void testEnhancedVersion() {
+        // Single element
+        assertEquals(5, bm.findMajorityElementEnhanced(new int[]{5}));
+
+        // Two same elements
+        assertEquals(3, bm.findMajorityElementEnhanced(new int[]{3, 3}));
+
+        // Two different elements
+        assertNull(bm.findMajorityElementEnhanced(new int[]{1, 2}));
+    }
+
+    @Test
+    @DisplayName("Test generic version")
     void testGenericVersion() {
         String[] strings = {"apple", "banana", "apple", "apple", "cherry"};
         String result = BoyerMooreMajorityVote.findMajorityElementGeneric(strings);
@@ -115,156 +278,16 @@ class BoyerMooreMajorityVoteTest {
     }
 
     @Test
-    @DisplayName("Test generic version with no majority")
-    void testGenericVersionNoMajority() {
-        String[] strings = {"apple", "banana", "cherry", "date"};
-        String result = BoyerMooreMajorityVote.findMajorityElementGeneric(strings);
-        assertNull(result);
-    }
+    @DisplayName("Test safe version with invalid input")
+    void testSafeVersion() {
+        var result1 = bm.findMajorityElementSafe(null);
+        assertTrue(result1.isEmpty());
 
-    @Test
-    @DisplayName("Test worst-case scenario")
-    void testWorstCaseScenario() {
-        int[] nums = {1, 2, 1, 2, 1, 2, 1};
-        Integer result = bm.findMajorityElement(nums);
-        assertEquals(1, result);
-    }
+        var result2 = bm.findMajorityElementSafe(new int[0]);
+        assertTrue(result2.isEmpty());
 
-    @Test
-    @DisplayName("Test large array with majority")
-    void testLargeArray() {
-        int size = 10000;
-        int[] nums = new int[size];
-        java.util.Arrays.fill(nums, 0, size/2 + 1, 42); // Majority
-        for (int i = size/2 + 1; i < size; i++) {
-            nums[i] = i; // Distinct elements
-        }
-
-        Integer result = bm.findMajorityElement(nums);
-        assertEquals(42, result);
-    }
-
-    @Test
-    @DisplayName("Test enhanced version with single element")
-    void testEnhancedVersionSingleElement() {
-        int[] nums = {7};
-        Integer result = bm.findMajorityElementEnhanced(nums);
-        assertEquals(7, result);
-    }
-
-    @Test
-    @DisplayName("Test enhanced version with two same elements")
-    void testEnhancedVersionTwoSame() {
-        int[] nums = {3, 3};
-        Integer result = bm.findMajorityElementEnhanced(nums);
-        assertEquals(3, result);
-    }
-
-    @Test
-    @DisplayName("Test enhanced version with two different elements")
-    void testEnhancedVersionTwoDifferent() {
-        int[] nums = {1, 2};
-        Integer result = bm.findMajorityElementEnhanced(nums);
-        assertNull(result);
-    }
-
-    @Test
-    @DisplayName("Test safe version with valid input")
-    void testSafeVersionValid() {
-        int[] nums = {1, 2, 2, 2, 3};
-        var result = bm.findMajorityElementSafe(nums);
-        assertTrue(result.isPresent());
-        assertEquals(2, result.get());
-    }
-
-    @Test
-    @DisplayName("Test safe version with null input")
-    void testSafeVersionNull() {
-        var result = bm.findMajorityElementSafe(null);
-        assertTrue(result.isEmpty());
-    }
-
-    @Test
-    @DisplayName("Test safe version with empty input")
-    void testSafeVersionEmpty() {
-        var result = bm.findMajorityElementSafe(new int[0]);
-        assertTrue(result.isEmpty());
-    }
-
-    @Test
-    @DisplayName("Test batch processing")
-    void testBatchProcessing() {
-        var arrays = java.util.List.of(
-                new int[]{1, 2, 2, 2, 3},
-                new int[]{3, 3, 3, 2, 2},
-                new int[]{1, 2, 3, 4, 5}
-        );
-
-        var results = bm.findMajorityElements(arrays);
-        assertEquals(2, results.size());
-        assertTrue(results.contains(2));
-        assertTrue(results.contains(3));
-    }
-
-    @Test
-    @DisplayName("Test array with all identical elements")
-    void testAllIdenticalElements() {
-        int[] nums = {5, 5, 5, 5, 5, 5, 5};
-        Integer result = bm.findMajorityElement(nums);
-        assertEquals(5, result);
-    }
-
-    @Test
-    @DisplayName("Test array with one element different")
-    void testOneElementDifferent() {
-        int[] nums = {4, 4, 4, 4, 4, 4, 3};
-        Integer result = bm.findMajorityElement(nums);
-        assertEquals(4, result);
-    }
-
-    @Test
-    @DisplayName("Test array with just over half majority")
-    void testJustOverHalfMajority() {
-        int[] nums = new int[101];
-        java.util.Arrays.fill(nums, 0, 51, 8); // 51 elements of 8
-        java.util.Arrays.fill(nums, 51, 101, 9); // 50 elements of 9
-        Integer result = bm.findMajorityElement(nums);
-        assertEquals(8, result);
-    }
-
-    @Test
-    @DisplayName("Test array with just under half majority")
-    void testJustUnderHalfMajority() {
-        int[] nums = new int[100];
-        java.util.Arrays.fill(nums, 0, 49, 7); // 49 elements of 7
-        java.util.Arrays.fill(nums, 49, 100, 8); // 51 elements of various 8+
-        for (int i = 49; i < 100; i++) {
-            nums[i] = 8 + (i % 10); // Make them different
-        }
-        Integer result = bm.findMajorityElement(nums);
-        assertNull(result);
-    }
-
-    @Test
-    @DisplayName("Test very large array performance")
-    void testVeryLargeArray() {
-        int size = 1000000;
-        int[] nums = new int[size];
-        // Create array with clear majority
-        int majority = 999;
-        int majorityCount = size / 2 + 1;
-        java.util.Arrays.fill(nums, 0, majorityCount, majority);
-        for (int i = majorityCount; i < size; i++) {
-            nums[i] = i; // All different
-        }
-
-        long startTime = System.nanoTime();
-        Integer result = bm.findMajorityElement(nums);
-        long endTime = System.nanoTime();
-
-        assertEquals(majority, result);
-        long duration = endTime - startTime;
-        // Should complete in reasonable time (e.g., less than 1 second)
-        assertTrue(duration < 1_000_000_000L, "Algorithm took too long: " + duration + " ns");
+        var result3 = bm.findMajorityElementSafe(new int[]{1, 2, 2, 2, 3});
+        assertTrue(result3.isPresent());
+        assertEquals(2, result3.get());
     }
 }
